@@ -66,7 +66,7 @@ model VerificationToken {
 model ApiKey {
   id       String @id @default(cuid())
   userId   String
-  provider String // 'openai', 'gemini', 'claude'
+  provider String // 'openai', 'gemini', 'claude', 'flux'
   keyValue String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
