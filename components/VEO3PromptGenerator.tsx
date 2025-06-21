@@ -72,7 +72,7 @@ export default function VEO3PromptGenerator() {
 
     const fluxApiKey = apiKeys['flux']
     if (!fluxApiKey) {
-      setError('Vui lòng cấu hình Flux API key trong phần Quản lý API Keys!')
+      setError('Vui lòng cấu hình BFL API key trong phần Quản lý API Keys!')
       return
     }
 
@@ -144,10 +144,10 @@ export default function VEO3PromptGenerator() {
 📝 Prompt gốc:
 ${prompt.trim()}
 
-🎬 Kết quả từ VEO3:
+🎬 Kết quả từ BFL API:
 ${JSON.stringify(data.data, null, 2)}
 
-📥 Để tải video, vui lòng kiểm tra link trong response trên.`)
+📥 Để tải ảnh, vui lòng kiểm tra link trong response trên.`)
         } else {
           setGeneratedPrompt(`✅ Yêu cầu đã được gửi thành công!
 
@@ -159,14 +159,14 @@ ${prompt.trim()}
 📊 Response:
 ${JSON.stringify(data, null, 2)}`)
         }
-      } else {
-        throw new Error(data.error || 'Không thể tạo video')
-      }
+              } else {
+          throw new Error(data.error || 'Không thể tạo ảnh')
+        }
 
     } catch (error) {
-      console.error('VEO3 API error:', error)
+      console.error('BFL API error:', error)
       
-      let errorMessage = 'Lỗi khi gọi API VEO3!'
+      let errorMessage = 'Lỗi khi gọi BFL API!'
       
       if (error instanceof Error) {
         if (error.message.includes('401')) {

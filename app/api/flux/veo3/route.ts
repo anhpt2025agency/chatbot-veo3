@@ -19,95 +19,95 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // URL API chính xác của Black Forest Labs - Updated URL
-    const apiUrl = process.env.FLUX_API_URL || 'https://api.bfl.ml'
+    // BFL Dashboard API URL - Updated to use dashboard API
+    const apiUrl = 'https://api.bfl.ml'
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('Calling VEO3 API:', `${apiUrl}/v1/flux-pro-1.1`)
+      console.log('Calling BFL API:', `${apiUrl}/v1/flux-pro-1.1`)
       console.log('Prompt:', prompt)
       console.log('Options:', options)
     }
 
-    // Validate API key format
+    // Validate API key format for BFL
     if (!apiKey.startsWith('bfl-')) {
       return NextResponse.json(
         { 
           error: 'API key không đúng định dạng. API key phải bắt đầu bằng "bfl-"',
-          hint: 'Lấy API key từ https://api.bfl.ml/'
+          hint: 'Lấy API key từ https://dashboard.bfl.ai/keys'
         },
         { status: 400 }
       )
     }
 
-    // Gọi Flux API thực tế với improved error handling
-    const fluxResponse = await fetch(`${apiUrl}/v1/flux-pro-1.1`, {
+    // Call BFL API with proper headers and payload
+    const bflResponse = await fetch(`${apiUrl}/v1/flux-pro-1.1`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'VEO3-Prompt-Generator/1.0',
+        'User-Agent': 'ChatBot-VEO3/1.0',
         'Accept': 'application/json'
       },
       body: JSON.stringify({
         prompt: prompt,
         width: options.aspect_ratio === '9:16' ? 576 : options.aspect_ratio === '1:1' ? 1024 : 1024,
         height: options.aspect_ratio === '9:16' ? 1024 : options.aspect_ratio === '1:1' ? 1024 : 576,
-        prompt_upsampling: false,
-        seed: Math.floor(Math.random() * 1000000),
-        safety_tolerance: 2,
-        output_format: 'jpeg'
+        prompt_upsampling: options.prompt_upsampling || false,
+        seed: options.seed || Math.floor(Math.random() * 1000000),
+        safety_tolerance: options.safety_tolerance || 2,
+        output_format: options.output_format || 'jpeg'
       }),
     })
 
-    const responseText = await fluxResponse.text()
+    const responseText = await bflResponse.text()
     if (process.env.NODE_ENV === 'development') {
-      console.log('API Response status:', fluxResponse.status)
-      console.log('API Response headers:', Object.fromEntries(fluxResponse.headers.entries()))
-      console.log('API Response body:', responseText)
+      console.log('BFL API Response status:', bflResponse.status)
+      console.log('BFL API Response headers:', Object.fromEntries(bflResponse.headers.entries()))
+      console.log('BFL API Response body:', responseText)
     }
 
-    if (!fluxResponse.ok) {
+    if (!bflResponse.ok) {
       let errorData;
       try {
         errorData = JSON.parse(responseText)
       } catch {
-        errorData = { error: responseText || fluxResponse.statusText }
+        errorData = { error: responseText || bflResponse.statusText }
       }
       
-      // Enhanced error messages based on status codes
+      // Enhanced error messages for BFL API
       let userFriendlyError = '';
-      switch (fluxResponse.status) {
+      switch (bflResponse.status) {
         case 401:
-          userFriendlyError = 'API key không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại API key.'
+          userFriendlyError = 'API key không hợp lệ. Vui lòng lấy API key mới từ BFL Dashboard.'
           break
         case 402:
-          userFriendlyError = 'Tài khoản không có đủ credits để thực hiện yêu cầu này.'
+          userFriendlyError = 'Tài khoản BFL không có đủ credits để tạo ảnh.'
           break
         case 403:
-          userFriendlyError = 'Không có quyền truy cập. Vui lòng kiểm tra API key và quyền hạn.'
+          userFriendlyError = 'Không có quyền truy cập BFL API. Kiểm tra API key và subscription.'
           break
         case 429:
-          userFriendlyError = 'Quá nhiều yêu cầu. Vui lòng thử lại sau vài phút.'
+          userFriendlyError = 'Quá nhiều yêu cầu đến BFL API. Vui lòng thử lại sau.'
           break
         case 500:
         case 502:
         case 503:
-          userFriendlyError = 'Lỗi server Flux API. Vui lòng thử lại sau.'
+          userFriendlyError = 'BFL API đang bảo trì. Vui lòng thử lại sau.'
           break
         default:
-          userFriendlyError = errorData.error || errorData.message || 'Lỗi không xác định từ Flux API'
+          userFriendlyError = errorData.error || errorData.message || 'Lỗi không xác định từ BFL API'
       }
       
       return NextResponse.json(
         { 
           error: userFriendlyError,
           details: errorData,
-          status: fluxResponse.status,
-          suggestion: fluxResponse.status === 401 ? 
-            'Lấy API key mới tại: https://api.bfl.ml/' : 
-            'Vui lòng thử lại sau hoặc liên hệ support.'
+          status: bflResponse.status,
+          suggestion: bflResponse.status === 401 ? 
+            'Lấy API key mới tại: https://dashboard.bfl.ai/keys' : 
+            'Vui lòng thử lại sau hoặc kiểm tra BFL Dashboard.'
         },
-        { status: fluxResponse.status }
+        { status: bflResponse.status }
       )
     }
 
@@ -115,31 +115,35 @@ export async function POST(request: NextRequest) {
     try {
       data = JSON.parse(responseText)
     } catch {
-      // Nếu không phải JSON, có thể là image trực tiếp
+      // If not JSON, might be direct image data
       return NextResponse.json({ 
         success: true, 
         data: { 
           result: responseText,
-          message: 'Đã tạo thành công! Response không phải JSON format.'
+          message: 'Tạo ảnh thành công từ BFL API!'
         }
       })
     }
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ 
+      success: true, 
+      data,
+      message: 'Tạo ảnh thành công từ BFL API!' 
+    })
 
   } catch (error) {
-    console.error('VEO3 API error:', error)
+    console.error('BFL API error:', error)
     
     let errorMessage = 'Lỗi server nội bộ'
     let suggestion = 'Vui lòng thử lại sau.'
     
     if (error instanceof Error) {
       if (error.message.includes('fetch')) {
-        errorMessage = 'Không thể kết nối đến Flux API. Vui lòng kiểm tra kết nối mạng.'
+        errorMessage = 'Không thể kết nối đến BFL API. Vui lòng kiểm tra kết nối mạng.'
         suggestion = 'Kiểm tra internet và thử lại.'
       } else if (error.message.includes('timeout')) {
-        errorMessage = 'Timeout khi gọi Flux API.'
-        suggestion = 'API đang bận, vui lòng thử lại sau.'
+        errorMessage = 'Timeout khi gọi BFL API.'
+        suggestion = 'BFL API đang bận, vui lòng thử lại sau.'
       } else {
         errorMessage = error.message
       }
@@ -149,6 +153,7 @@ export async function POST(request: NextRequest) {
       { 
         error: errorMessage,
         suggestion: suggestion,
+        provider: 'BFL API',
         timestamp: new Date().toISOString()
       },
       { status: 500 }
