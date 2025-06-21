@@ -1,0 +1,5 @@
+# Tạo file .env.local với nội dung sau:
+FLUX_API_URL=https://api.bfl.ml
+FLUX_API_KEY=your_actual_api_key_here
+
+# Thay your_actual_api_key_here bằng API key thật của bạn
