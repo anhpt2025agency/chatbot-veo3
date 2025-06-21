@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'api.flux.ai', 'cdn.flux.ai'],
-  },
-  env: {
-    FLUX_API_URL: process.env.FLUX_API_URL || 'https://api.flux.ai/v1',
+    domains: ['localhost', 'api.bfl.ml', 'cdn.bfl.ai'],
   },
   // Enable standalone output for production deployment
   output: 'standalone',
